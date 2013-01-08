@@ -83,7 +83,7 @@ class Powerline:
 
 class Segment:
     def __init__(self, powerline, content, fg, bg, separator=None,
-            separator_fg=None):
+                 separator_fg=None):
         self.powerline = powerline
         self.content = content
         self.fg = fg
@@ -124,18 +124,28 @@ def add_cwd_segment(powerline, cwd, maxdepth, cwd_only=False):
 
     if not cwd_only:
         for n in names[:-1]:
-            powerline.append(Segment(powerline, ' %s ' % n, Color.PATH_FG,
-                Color.PATH_BG, powerline.separator_thin, Color.SEPARATOR_FG))
-    powerline.append(Segment(powerline, ' %s ' % names[-1], Color.CWD_FG,
-        Color.PATH_BG))
+            powerline.append(
+                Segment(
+                    powerline, ' %s ' % n, Color.PATH_FG,
+                    Color.PATH_BG,
+                    powerline.separator_thin,
+                    Color.SEPARATOR_FG
+                )
+            )
+    powerline.append(
+        Segment(
+            powerline, ' %s ' % names[-1], Color.CWD_FG, Color.PATH_BG
+        )
+    )
 
 
 def get_hg_status():
     has_modified_files = False
     has_untracked_files = False
     has_missing_files = False
-    output = subprocess.Popen(['hg', 'status'],
-            stdout=subprocess.PIPE).communicate()[0]
+    output = subprocess.Popen(
+        ['hg', 'status'], stdout=subprocess.PIPE
+    ).communicate()[0]
     for line in output.split('\n'):
         if line == '':
             continue
@@ -172,11 +182,13 @@ def get_git_status():
     has_pending_commits = True
     has_untracked_files = False
     origin_position = ""
-    output = subprocess.Popen(['git', 'status', '--ignore-submodules'],
-            stdout=subprocess.PIPE).communicate()[0]
+    output = subprocess.Popen(
+        ['git', 'status', '--ignore-submodules'],
+        stdout=subprocess.PIPE
+    ).communicate()[0]
     for line in output.split('\n'):
         origin_status = re.findall(
-                r"Your branch is (ahead|behind).*?(\d+) comm", line)
+            r"Your branch is (ahead|behind).*?(\d+) comm", line)
         if origin_status:
             origin_position = " %d" % int(origin_status[0][1])
             if origin_status[0][0] == 'behind':
@@ -235,15 +247,24 @@ def add_svn_segment(powerline, cwd):
     #TODO: Color segment based on above status codes
     try:
         #cmd = '"svn status | grep -c "^[ACDIMRX\\!\\~]"'
-        p1 = subprocess.Popen(['svn', 'status'], stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-        p2 = subprocess.Popen(['grep', '-c', '^[ACDIMRX\\!\\~]'],
-                stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(
+            ['svn', 'status'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        p2 = subprocess.Popen(
+            ['grep', '-c', '^[ACDIMRX\\!\\~]'],
+            stdin=p1.stdout, stdout=subprocess.PIPE
+        )
         output = p2.communicate()[0].strip()
         if len(output) > 0 and int(output) > 0:
             changes = output.strip()
-            powerline.append(Segment(powerline, ' %s ' % changes,
-                Color.SVN_CHANGES_FG, Color.SVN_CHANGES_BG))
+            powerline.append(
+                Segment(
+                    powerline, ' %s ' % changes,
+                    Color.SVN_CHANGES_FG, Color.SVN_CHANGES_BG
+                )
+            )
     except OSError:
         return False
     except subprocess.CalledProcessError:
@@ -304,7 +325,9 @@ def get_valid_cwd():
         except:
             warn("Your current directory is invalid.")
             sys.exit(1)
-        warn("Your current directory is invalid. Lowest valid directory: " + up)
+        warn(
+            "Your current directory is invalid. Lowest valid directory: " + up
+        )
     return cwd
 
 if __name__ == '__main__':
@@ -318,10 +341,8 @@ if __name__ == '__main__':
     p = Powerline(mode=args.mode, shell=args.shell)
     cwd = get_valid_cwd()
     add_virtual_env_segment(p, cwd)
-    #p.append(Segment(p, ' \\u ', 250, 240))
-    #p.append(Segment(p, ' \\h ', 250, 238))
-    add_cwd_segment(p, cwd, 5, args.cwd_only)
     add_repo_segment(p, cwd)
+    add_cwd_segment(p, cwd, 5, args.cwd_only)
     add_root_indicator(p, args.prev_error)
     sys.stdout.write(p.draw())
 
